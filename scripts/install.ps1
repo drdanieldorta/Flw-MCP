@@ -1,18 +1,18 @@
 <#
 Instalador do mdia-flw-mcp para Windows (PowerShell 5.1 ou superior).
 
-Modo recomendado (repositório clonado na máquina):
-  git clone https://github.com/drdanieldorta/mdia-flw-mcp.git
-  cd mdia-flw-mcp
-  powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Client all
+Uso direto da internet (precisa de Node.js 18+ e Git):
+  powershell -ExecutionPolicy Bypass -c "iwr -useb https://raw.githubusercontent.com/drdanieldorta/mdia-flw-mcp/HEAD/scripts/install.ps1 | iex"
 
-O script detecta que está dentro do repositório, roda npm install + build e
-registra o servidor apontando para dist\index.js (não depende de rede depois).
+Uso a partir do repositório clonado (compila e registra dist\index.js; não precisa de rede depois):
+  git clone https://github.com/drdanieldorta/mdia-flw-mcp.git ; cd mdia-flw-mcp
+  powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Client all
 
 Parâmetros:
   -Client     claude-code | codex | claude-desktop | cursor | all   (padrão: all)
   -Token      token permanente da API (ou defina $env:FLW_API_KEY; senão, pergunta)
-  -Source     pacote a executar via npx em vez do modo local (ex.: mdia-flw-mcp após publicar no npm)
+  -Source     pacote a executar via npx (padrão fora do clone: github:drdanieldorta/mdia-flw-mcp;
+              aceita também mdia-flw-mcp após publicar no npm, ou a URL do .tgz de um release)
   -Messaging  habilita as ferramentas de envio de mensagem
 #>
 param(
@@ -39,8 +39,11 @@ if (-not $Source) {
   if ($RepoRoot -and (Test-Path (Join-Path $RepoRoot "package.json"))) {
     $LocalMode = $true
   } else {
-    throw "Execute este script de dentro do repositório clonado (scripts\install.ps1) ou informe -Source <pacote npm>."
+    $Source = "github:drdanieldorta/mdia-flw-mcp"
   }
+}
+if (-not $LocalMode -and ($Source.StartsWith("github:") -or $Source.StartsWith("git+")) -and -not (Get-Command git -ErrorAction SilentlyContinue)) {
+  throw "Git não encontrado e é necessário para instalar de $Source. Instale o Git (https://git-scm.com) ou use -Source com a URL do pacote de um release (.tgz)."
 }
 
 if ($LocalMode) {
@@ -56,6 +59,7 @@ if ($LocalMode) {
   $Command = "node"
   [string[]]$CmdArgs = @($Entry)
 } else {
+  Write-Host "==> Registrando execução via: npx -y $Source"
   # No Windows, clientes MCP não conseguem executar npx.cmd diretamente; use cmd /c.
   $Command = "cmd"
   [string[]]$CmdArgs = @("/c", "npx", "-y", $Source)

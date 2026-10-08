@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 # Instalador do mdia-flw-mcp para Linux/macOS.
 #
-# Modo recomendado (repositório clonado na máquina):
-#   git clone https://github.com/drdanieldorta/mdia-flw-mcp.git
-#   cd mdia-flw-mcp
-#   ./scripts/install.sh --client all
+# Uso direto da internet (precisa de Node.js 18+ e Git):
+#   curl -fsSL https://raw.githubusercontent.com/drdanieldorta/mdia-flw-mcp/HEAD/scripts/install.sh | bash -s -- --client all --token pn_SEU_TOKEN
 #
-# O script detecta que está dentro do repositório, roda npm install + build e
-# registra o servidor apontando para dist/index.js (não depende de rede depois).
+# Uso a partir do repositório clonado (compila e registra dist/index.js; não precisa de rede depois):
+#   git clone https://github.com/drdanieldorta/mdia-flw-mcp.git && cd mdia-flw-mcp
+#   ./scripts/install.sh --client all
 #
 # Opções:
 #   --client   claude-code | codex | claude-desktop | cursor | all   (padrão: all)
 #   --token    token permanente da API (ou exporte FLW_API_KEY; senão, pergunta)
-#   --source   pacote a executar via npx em vez do modo local (ex.: mdia-flw-mcp após publicar no npm)
+#   --source   pacote a executar via npx (padrão fora do clone: github:drdanieldorta/mdia-flw-mcp;
+#              aceita também mdia-flw-mcp após publicar no npm, ou a URL do .tgz de um release)
 #   --messaging  habilita as ferramentas de envio de mensagem (FLW_ENABLE_MESSAGING=true)
 set -euo pipefail
 
@@ -28,7 +28,7 @@ while [[ $# -gt 0 ]]; do
     --token) TOKEN="$2"; shift 2 ;;
     --source) SOURCE="$2"; shift 2 ;;
     --messaging) MESSAGING="true"; shift ;;
-    -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
     *) echo "Opção desconhecida: $1" >&2; exit 1 ;;
   esac
 done
@@ -50,15 +50,19 @@ if [[ -n "${BASH_SOURCE[0]:-}" && -f "${BASH_SOURCE[0]}" ]]; then
 fi
 COMMAND=""
 ARGS=()
-if [[ -n "$SOURCE" ]]; then
-  COMMAND="npx"; ARGS=("-y" "$SOURCE")
-elif [[ -n "$REPO_ROOT" && -f "$REPO_ROOT/package.json" ]]; then
+if [[ -z "$SOURCE" && -n "$REPO_ROOT" && -f "$REPO_ROOT/package.json" ]]; then
   echo "==> Compilando a partir de $REPO_ROOT"
   (cd "$REPO_ROOT" && npm install --no-audit --no-fund && npm run build)
   COMMAND="node"; ARGS=("$REPO_ROOT/dist/index.js")
 else
-  echo "Execute este script de dentro do repositório clonado (scripts/install.sh) ou informe --source <pacote npm>." >&2
-  exit 1
+  SOURCE="${SOURCE:-github:drdanieldorta/mdia-flw-mcp}"
+  if [[ "$SOURCE" == github:* || "$SOURCE" == git+* ]] && ! command -v git >/dev/null 2>&1; then
+    echo "Git não encontrado e é necessário para instalar de $SOURCE. Instale o Git (https://git-scm.com)" >&2
+    echo "ou use --source com a URL do pacote de um release (.tgz)." >&2
+    exit 1
+  fi
+  echo "==> Registrando execução via: npx -y $SOURCE"
+  COMMAND="npx"; ARGS=("-y" "$SOURCE")
 fi
 
 # --- Token ----------------------------------------------------------------------

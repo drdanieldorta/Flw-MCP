@@ -1,0 +1,45 @@
+# Dispara ao enviar uma tag v* (ex.: git tag v0.1.0 && git push origin v0.1.0).
+# 1. Roda os testes.
+# 2. Cria um release no GitHub com o pacote mdia-flw-mcp.tgz anexado, o que
+#    permite instalar sem Git e sem npm publish:
+#    npx -y https://github.com/drdanieldorta/mdia-flw-mcp/releases/latest/download/mdia-flw-mcp.tgz
+# 3. Publica no npm somente se o secret NPM_TOKEN existir.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Empacotar
+        run: |
+          npm pack
+          mv mdia-flw-mcp-*.tgz mdia-flw-mcp.tgz
+      - name: Criar release no GitHub com o pacote anexado
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" mdia-flw-mcp.tgz --title "$GITHUB_REF_NAME" --generate-notes
+      - name: Publicar no npm (só se NPM_TOKEN estiver configurado)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "Secret NPM_TOKEN ausente; publicação no npm pulada."
+            exit 0
+          fi
+          npm publish --provenance --access public

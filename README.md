@@ -7,82 +7,98 @@ Conecta o **Claude Code**, o **Codex CLI**, o Claude Desktop e o Cursor à API d
 
 ## Instalação em 2 passos
 
+Pré-requisitos: **Node.js 18+** (https://nodejs.org) e **Git** (https://git-scm.com). No Windows, instale os dois e abra um terminal novo.
+
 ### Passo 1: gere o token na plataforma FLW
 
 **Ajustes > Integrações > Integração via API (Configurar) > Novo**. Copie o token (`pn_...`).
 
 > Tokens sem uso por mais de 15 dias são apagados pela plataforma. Se parar de funcionar, gere outro.
 
-### Passo 2: cole um comando
-
-Pré-requisito único: **Node.js 18+** instalado (https://nodejs.org).
+### Passo 2: cole um comando no terminal
 
 **Claude Code**
 ```bash
-claude mcp add flw -s user -e FLW_API_KEY=pn_SEU_TOKEN -- npx -y mdia-flw-mcp
+claude mcp add flw -s user -e FLW_API_KEY=pn_SEU_TOKEN -- npx -y github:drdanieldorta/mdia-flw-mcp
 ```
 
 **Codex CLI**
 ```bash
-codex mcp add flw --env FLW_API_KEY=pn_SEU_TOKEN -- npx -y mdia-flw-mcp
+codex mcp add flw --env FLW_API_KEY=pn_SEU_TOKEN -- npx -y github:drdanieldorta/mdia-flw-mcp
 ```
-Ou edite `~/.codex/config.toml`:
+
+**No Windows**, troque `npx -y github:...` por `cmd /c npx -y github:drdanieldorta/mdia-flw-mcp` nos dois comandos.
+
+**Teste:** abra o Claude Code ou o Codex e peça *"use flw_status para verificar a conexão com o FLW"*.
+
+A primeira inicialização baixa e compila o servidor (cerca de 20 segundos). As seguintes levam poucos segundos.
+
+---
+
+## Instalador automático (todos os clientes de uma vez)
+
+Registra o servidor no Claude Code, Codex, Claude Desktop e Cursor. Pede o token se não for informado.
+
+**Windows (PowerShell)**
+```powershell
+powershell -ExecutionPolicy Bypass -c "$env:FLW_API_KEY='pn_SEU_TOKEN'; iwr -useb https://raw.githubusercontent.com/drdanieldorta/mdia-flw-mcp/HEAD/scripts/install.ps1 | iex"
+```
+
+**Linux / macOS**
+```bash
+curl -fsSL https://raw.githubusercontent.com/drdanieldorta/mdia-flw-mcp/HEAD/scripts/install.sh | bash -s -- --client all --token pn_SEU_TOKEN
+```
+
+Opções: `--client claude-code | codex | claude-desktop | cursor | all` e `--messaging` (liga o envio de mensagens). No PowerShell: `-Client` e `-Messaging`.
+
+### Sem Git na máquina
+
+1. No GitHub, clique em **Code > Download ZIP** e extraia.
+2. Dentro da pasta extraída:
+   - Windows: `powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Client all`
+   - Linux / macOS: `./scripts/install.sh --client all`
+
+O instalador compila o projeto e registra o caminho local, sem depender de rede depois.
+
+### Configuração manual (Claude Desktop e Cursor)
+
+Claude Desktop: `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/`, Windows: `%APPDATA%\Claude\`).
+Cursor: `~/.cursor/mcp.json`.
+
+```json
+{
+  "mcpServers": {
+    "flw": {
+      "command": "npx",
+      "args": ["-y", "github:drdanieldorta/mdia-flw-mcp"],
+      "env": { "FLW_API_KEY": "pn_SEU_TOKEN" }
+    }
+  }
+}
+```
+No Windows use `"command": "cmd"` e `"args": ["/c", "npx", "-y", "github:drdanieldorta/mdia-flw-mcp"]`.
+
+Codex CLI, se preferir editar `~/.codex/config.toml`:
 ```toml
 [mcp_servers.flw]
 command = "npx"
-args = ["-y", "mdia-flw-mcp"]
+args = ["-y", "github:drdanieldorta/mdia-flw-mcp"]
 
 [mcp_servers.flw.env]
 FLW_API_KEY = "pn_SEU_TOKEN"
 ```
 
-**Windows (Claude Code ou Codex):** troque `npx -y mdia-flw-mcp` por `cmd /c npx -y mdia-flw-mcp`.
-
-**Teste:** peça ao assistente *"use flw_status para verificar a conexão com o FLW"*.
-
-> **Status do pacote:** os comandos acima dependem do pacote `mdia-flw-mcp` publicado no npm.
-> Enquanto a publicação não acontece, use a [instalação a partir do repositório](#instalação-a-partir-do-repositório) abaixo.
-
 ---
 
-## Instalação a partir do repositório
+## Releases e npm (opcional, pelo dono do repositório)
 
-Funciona hoje, sem npm, em qualquer máquina com acesso a este repositório. O instalador compila o projeto e registra o servidor no Claude Code, Codex, Claude Desktop e Cursor.
+Ao enviar uma tag `v*` (`git tag v0.1.0 && git push origin v0.1.0`), o workflow `release.yml` roda os testes, cria um release no GitHub com o pacote `mdia-flw-mcp.tgz` anexado e, se o secret `NPM_TOKEN` existir, publica no npm.
 
-**Windows (PowerShell)**
-```powershell
-git clone https://github.com/drdanieldorta/mdia-flw-mcp.git
-cd mdia-flw-mcp
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Client all
-```
-
-**Linux / macOS**
+Com o release publicado, a instalação dispensa Git:
 ```bash
-git clone https://github.com/drdanieldorta/mdia-flw-mcp.git
-cd mdia-flw-mcp
-./scripts/install.sh --client all
+claude mcp add flw -s user -e FLW_API_KEY=pn_SEU_TOKEN -- npx -y https://github.com/drdanieldorta/mdia-flw-mcp/releases/latest/download/mdia-flw-mcp.tgz
 ```
-
-O instalador pede o token e registra o servidor como `flw`. Opções: `--client claude-code | codex | claude-desktop | cursor | all` e `--messaging` (liga o envio de mensagens).
-
-Sem Git instalado: baixe o ZIP pelo botão **Code > Download ZIP** no GitHub, extraia e rode o mesmo comando dentro da pasta.
-
----
-
-## Publicar no npm (uma vez, pelo dono do repositório)
-
-Isso é o que torna a instalação de uma linha possível para qualquer pessoa.
-
-**Opção A, manual**
-```bash
-npm login
-npm publish --access public
-```
-
-**Opção B, automática pelo GitHub**
-1. Crie um token *Automation* em npmjs.com > Access Tokens.
-2. No GitHub: Settings > Secrets and variables > Actions > `NPM_TOKEN`.
-3. Publique criando uma tag: `git tag v0.1.0 && git push --tags`. O workflow `publish.yml` roda os testes e publica.
+Com o pacote no npm, o comando fica apenas `npx -y mdia-flw-mcp`.
 
 ---
 
