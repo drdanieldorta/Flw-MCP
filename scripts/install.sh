@@ -8,7 +8,11 @@
 #   git clone https://github.com/drdanieldorta/Flw-MCP.git && cd Flw-MCP
 #   ./scripts/install.sh --client all
 #
+# Desinstalar (remove a entrada "flw" de todos os clientes, ou só do --client informado):
+#   curl -fsSL https://raw.githubusercontent.com/drdanieldorta/Flw-MCP/HEAD/scripts/install.sh | bash -s -- --uninstall
+#
 # Opções:
+#   --uninstall  remove o servidor dos clientes em vez de instalar
 #   --client   claude-code | codex | claude-desktop | cursor | all   (padrão: all)
 #   --token    token permanente da API (ou exporte FLW_API_KEY; senão, pergunta)
 #   --source   pacote a executar via npx (padrão fora do clone: github:drdanieldorta/Flw-MCP;
@@ -20,15 +24,17 @@ CLIENT="all"
 TOKEN="${FLW_API_KEY:-}"
 SOURCE=""
 MESSAGING="false"
+UNINSTALL="false"
 NAME="flw"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --uninstall) UNINSTALL="true"; shift ;;
     --client) CLIENT="$2"; shift 2 ;;
     --token) TOKEN="$2"; shift 2 ;;
     --source) SOURCE="$2"; shift 2 ;;
     --messaging) MESSAGING="true"; shift ;;
-    -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
     *) echo "Opção desconhecida: $1" >&2; exit 1 ;;
   esac
 done
@@ -41,6 +47,82 @@ NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
 if [[ "$NODE_MAJOR" -lt 18 ]]; then
   echo "Node.js $(node -v) é antigo. Necessário 18 ou superior." >&2
   exit 1
+fi
+
+# --- Desinstalação ------------------------------------------------------------------
+remove_json_entry() {
+  local file="$1"
+  if [[ ! -f "$file" ]]; then echo "  arquivo não existe: $file"; return 0; fi
+  node -e '
+    const fs = require("fs");
+    const [file, name] = process.argv.slice(1);
+    const raw = fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "").trim();
+    if (!raw) { console.log("  arquivo vazio: " + file); process.exit(0); }
+    let cfg;
+    try { cfg = JSON.parse(raw); } catch (e) { console.error("  JSON inválido em " + file + ": " + e.message); process.exit(1); }
+    if (cfg.mcpServers && Object.prototype.hasOwnProperty.call(cfg.mcpServers, name)) {
+      delete cfg.mcpServers[name];
+      fs.writeFileSync(file, JSON.stringify(cfg, null, 2) + "\n");
+      console.log("  removido \x27" + name + "\x27 de " + file);
+    } else {
+      console.log("  \x27" + name + "\x27 não estava em " + file);
+    }
+  ' "$file" "$NAME"
+}
+
+remove_codex_entry() {
+  local file="${CODEX_HOME:-$HOME/.codex}/config.toml"
+  if [[ ! -f "$file" ]]; then echo "  arquivo não existe: $file"; return 0; fi
+  node -e '
+    const fs = require("fs");
+    const [file, name] = process.argv.slice(1);
+    const lines = fs.readFileSync(file, "utf8").split(/\r?\n/);
+    const kept = [];
+    let skipping = false, removed = false;
+    for (const line of lines) {
+      const header = line.match(/^\s*\[([^\]]+)\]/);
+      if (header) {
+        skipping = header[1] === `mcp_servers.${name}` || header[1].startsWith(`mcp_servers.${name}.`);
+        if (skipping) removed = true;
+      }
+      if (!skipping) kept.push(line);
+    }
+    if (!removed) { console.log("  \x27" + name + "\x27 não estava em " + file); process.exit(0); }
+    while (kept.length && kept[kept.length - 1].trim() === "") kept.pop();
+    fs.writeFileSync(file, kept.length ? kept.join("\n") + "\n" : "");
+    console.log("  removido [mcp_servers." + name + "] de " + file);
+  ' "$file" "$NAME"
+}
+
+uninstall_all() {
+  local c="$1"
+  if [[ "$c" == "claude-code" || "$c" == "all" ]]; then
+    echo "==> Claude Code"
+    if command -v claude >/dev/null 2>&1; then
+      for scope in user local project; do claude mcp remove "$NAME" -s "$scope" >/dev/null 2>&1 || true; done
+      echo "  removido '$NAME' (escopos user, local e project). Confira com: claude mcp list"
+    else
+      echo "  CLI 'claude' não encontrada; nada a remover."
+    fi
+  fi
+  if [[ "$c" == "codex" || "$c" == "all" ]]; then echo "==> Codex CLI"; remove_codex_entry; fi
+  if [[ "$c" == "claude-desktop" || "$c" == "all" ]]; then
+    echo "==> Claude Desktop"
+    case "$(uname -s)" in
+      Darwin) remove_json_entry "$HOME/Library/Application Support/Claude/claude_desktop_config.json" ;;
+      Linux)  remove_json_entry "${XDG_CONFIG_HOME:-$HOME/.config}/Claude/claude_desktop_config.json" ;;
+    esac
+  fi
+  if [[ "$c" == "cursor" || "$c" == "all" ]]; then echo "==> Cursor"; remove_json_entry "$HOME/.cursor/mcp.json"; fi
+  echo
+  echo "Desinstalação concluída. Para instalar de novo, rode o mesmo script sem --uninstall."
+}
+
+if [[ "$UNINSTALL" == "true" ]]; then
+  case "$CLIENT" in
+    claude-code|codex|claude-desktop|cursor|all) uninstall_all "$CLIENT"; exit 0 ;;
+    *) echo "Cliente desconhecido: $CLIENT" >&2; exit 1 ;;
+  esac
 fi
 
 # --- Modo: local (clone) ou npx (pacote) --------------------------------------

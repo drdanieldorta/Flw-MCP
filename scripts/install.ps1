@@ -8,7 +8,12 @@ Uso a partir do repositório clonado (compila e registra dist\index.js; não pre
   git clone https://github.com/drdanieldorta/Flw-MCP.git ; cd Flw-MCP
   powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Client all
 
+Desinstalar (remove a entrada "flw" de todos os clientes, ou só do -Client informado):
+  & ([scriptblock]::Create((iwr -useb https://raw.githubusercontent.com/drdanieldorta/Flw-MCP/HEAD/scripts/install.ps1).Content)) -Uninstall
+  powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Uninstall
+
 Parâmetros:
+  -Uninstall  remove o servidor dos clientes em vez de instalar
   -Client     claude-code | codex | claude-desktop | cursor | all   (padrão: all)
   -Token      token permanente da API (ou defina $env:FLW_API_KEY; senão, pergunta)
   -Source     pacote a executar via npx (padrão fora do clone: github:drdanieldorta/Flw-MCP;
@@ -19,10 +24,91 @@ param(
   [ValidateSet("claude-code", "codex", "claude-desktop", "cursor", "all")] [string]$Client = "all",
   [string]$Token = $env:FLW_API_KEY,
   [string]$Source = "",
-  [switch]$Messaging
+  [switch]$Messaging,
+  [switch]$Uninstall
 )
 $ErrorActionPreference = "Stop"
 $Name = "flw"
+
+# --- Desinstalação -------------------------------------------------------------
+function Remove-FromJsonFile([string]$file) {
+  if (-not (Test-Path $file)) { Write-Host "  arquivo não existe: $file"; return }
+  $raw = Get-Content $file -Raw
+  if (-not $raw -or -not $raw.Trim()) { Write-Host "  arquivo vazio: $file"; return }
+  $cfg = $raw | ConvertFrom-Json
+  if (($cfg.PSObject.Properties.Name -contains "mcpServers") -and ($cfg.mcpServers.PSObject.Properties.Name -contains $Name)) {
+    $cfg.mcpServers.PSObject.Properties.Remove($Name)
+    $json = $cfg | ConvertTo-Json -Depth 10
+    [System.IO.File]::WriteAllText($file, $json + "`n", (New-Object System.Text.UTF8Encoding $false))
+    Write-Host "  removido '$Name' de $file"
+  } else {
+    Write-Host "  '$Name' não estava em $file"
+  }
+}
+
+function Remove-FromCodexToml {
+  $codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME ".codex" }
+  $file = Join-Path $codexHome "config.toml"
+  if (-not (Test-Path $file)) { Write-Host "  arquivo não existe: $file"; return }
+  $kept = New-Object System.Collections.Generic.List[string]
+  $removed = $false
+  $skipping = $false
+  foreach ($line in (Get-Content $file)) {
+    if ($line -match '^\s*\[([^\]]+)\]') {
+      $section = $Matches[1]
+      $skipping = ($section -eq "mcp_servers.$Name") -or $section.StartsWith("mcp_servers.$Name.")
+      if ($skipping) { $removed = $true }
+    }
+    if (-not $skipping) { $kept.Add($line) }
+  }
+  if ($removed) {
+    while ($kept.Count -gt 0 -and $kept[$kept.Count - 1].Trim() -eq "") { $kept.RemoveAt($kept.Count - 1) }
+    $text = ""
+    if ($kept.Count -gt 0) { $text = ($kept -join "`n") + "`n" }
+    [System.IO.File]::WriteAllText($file, $text, (New-Object System.Text.UTF8Encoding $false))
+    Write-Host "  removido '[mcp_servers.$Name]' de $file"
+  } else {
+    Write-Host "  '$Name' não estava em $file"
+  }
+}
+
+function Uninstall-ClaudeCode {
+  Write-Host "==> Claude Code"
+  if (-not (Get-Command claude -ErrorAction SilentlyContinue)) { Write-Host "  CLI 'claude' não encontrada; nada a remover."; return }
+  foreach ($scope in @("user", "local", "project")) {
+    & claude mcp remove $Name -s $scope 2>$null | Out-Null
+  }
+  Write-Host "  removido '$Name' (escopos user, local e project). Confira com: claude mcp list"
+}
+
+function Uninstall-Codex {
+  Write-Host "==> Codex CLI"
+  Remove-FromCodexToml
+}
+
+function Uninstall-ClaudeDesktop {
+  Write-Host "==> Claude Desktop"
+  Remove-FromJsonFile (Join-Path $env:APPDATA "Claude\claude_desktop_config.json")
+  Write-Host "  feche o Claude Desktop pela bandeja do sistema e abra de novo."
+}
+
+function Uninstall-Cursor {
+  Write-Host "==> Cursor"
+  Remove-FromJsonFile (Join-Path $HOME ".cursor\mcp.json")
+}
+
+if ($Uninstall) {
+  switch ($Client) {
+    "claude-code"    { Uninstall-ClaudeCode }
+    "codex"          { Uninstall-Codex }
+    "claude-desktop" { Uninstall-ClaudeDesktop }
+    "cursor"         { Uninstall-Cursor }
+    "all"            { Uninstall-ClaudeCode; Uninstall-Codex; Uninstall-ClaudeDesktop; Uninstall-Cursor }
+  }
+  Write-Host ""
+  Write-Host "Desinstalação concluída. Para instalar de novo, rode o mesmo script sem -Uninstall."
+  exit 0
+}
 
 # --- Pré-requisitos ---------------------------------------------------------
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) {

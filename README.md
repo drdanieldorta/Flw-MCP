@@ -51,6 +51,22 @@ curl -fsSL https://raw.githubusercontent.com/drdanieldorta/Flw-MCP/HEAD/scripts/
 
 Opções: `--client claude-code | codex | claude-desktop | cursor | all` e `--messaging` (liga o envio de mensagens). No PowerShell: `-Client` e `-Messaging`.
 
+### Desinstalar ou refazer
+
+Rodar o instalador de novo **substitui** a entrada `flw` (serve para trocar o token ou corrigir uma instalação errada). Para remover de todos os clientes:
+
+**Windows (PowerShell)**
+```powershell
+& ([scriptblock]::Create((iwr -useb https://raw.githubusercontent.com/drdanieldorta/Flw-MCP/HEAD/scripts/install.ps1).Content)) -Uninstall
+```
+
+**Linux / macOS**
+```bash
+curl -fsSL https://raw.githubusercontent.com/drdanieldorta/Flw-MCP/HEAD/scripts/install.sh | bash -s -- --uninstall
+```
+
+Acrescente `-Client cursor` (ou `--client cursor`) para remover de um cliente só. Manualmente: `claude mcp remove flw -s user`, `codex mcp remove flw`, e apagar o bloco `flw` em `claude_desktop_config.json` ou `~/.cursor/mcp.json`.
+
 ### Sem Git na máquina
 
 1. No GitHub, clique em **Code > Download ZIP** e extraia.
