@@ -226,7 +226,8 @@ Todas têm prefixo `flw_`. Listagens são paginadas (`pageNumber`, `pageSize` at
 
 | Sintoma | Causa | Solução |
 |---------|-------|---------|
-| `404` ao baixar o script via `iwr`/`curl` | Repositório privado | Clone o repositório e rode o instalador local, ou publique no npm. |
+| `404` ao baixar o script via `iwr`/`curl` | URL apontando para uma branch inexistente | Use as URLs com `/HEAD/` deste README, que seguem a branch padrão. |
+| `npx` trava ou falha ao baixar `github:...` | Git ausente na máquina | Instale o Git ou use o caminho "Sem Git na máquina". |
 | `ENOENT npx` no Windows | Clientes MCP não executam `npx.cmd` direto | Use `cmd /c npx ...` (o instalador já faz isso). |
 | `ERROR_UNAUTHORIZED` em `flw_status` | Token inválido ou expirado | Gere um novo token na plataforma. |
 | `429` | Rate limit | Aguarde; o servidor já refaz a tentativa automaticamente. |
