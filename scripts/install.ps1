@@ -30,6 +30,21 @@ param(
 $ErrorActionPreference = "Stop"
 $Name = "flw"
 
+# Executa um programa externo sem que mensagens no stderr virem erro fatal
+# (comportamento do PowerShell 5.1 com ErrorActionPreference = Stop).
+# Retorna o código de saída. Com -Quiet, descarta toda a saída.
+function Invoke-Native {
+  param([string]$Exe, [string[]]$ArgList = @(), [switch]$Quiet)
+  $prev = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  try {
+    if ($Quiet) { & $Exe @ArgList 2>&1 | Out-Null } else { & $Exe @ArgList }
+    return $LASTEXITCODE
+  } finally {
+    $ErrorActionPreference = $prev
+  }
+}
+
 # --- Desinstalação -------------------------------------------------------------
 function Remove-FromJsonFile([string]$file) {
   if (-not (Test-Path $file)) { Write-Host "  arquivo não existe: $file"; return }
@@ -76,7 +91,7 @@ function Uninstall-ClaudeCode {
   Write-Host "==> Claude Code"
   if (-not (Get-Command claude -ErrorAction SilentlyContinue)) { Write-Host "  CLI 'claude' não encontrada; nada a remover."; return }
   foreach ($scope in @("user", "local", "project")) {
-    & claude mcp remove $Name -s $scope 2>$null | Out-Null
+    [void](Invoke-Native "claude" @("mcp", "remove", $Name, "-s", $scope) -Quiet)
   }
   Write-Host "  removido '$Name' (escopos user, local e project). Confira com: claude mcp list"
 }
@@ -136,10 +151,10 @@ if ($LocalMode) {
   Write-Host "==> Compilando a partir de $RepoRoot"
   Push-Location $RepoRoot
   try {
-    & npm install --no-audit --no-fund
-    if ($LASTEXITCODE -ne 0) { throw "npm install falhou" }
-    & npm run build
-    if ($LASTEXITCODE -ne 0) { throw "npm run build falhou" }
+    $code = Invoke-Native "npm" @("install", "--no-audit", "--no-fund")
+    if ($code -ne 0) { throw "npm install falhou (código $code)" }
+    $code = Invoke-Native "npm" @("run", "build")
+    if ($code -ne 0) { throw "npm run build falhou (código $code)" }
   } finally { Pop-Location }
   $Entry = Join-Path $RepoRoot "dist\index.js"
   $Command = "node"
@@ -201,11 +216,12 @@ function Install-ClaudeCode {
     Write-Warning "  CLI 'claude' não encontrada. Instale com: npm install -g @anthropic-ai/claude-code"
     return
   }
-  & claude mcp remove $Name -s user 2>$null | Out-Null
+  [void](Invoke-Native "claude" @("mcp", "remove", $Name, "-s", "user") -Quiet)
   $cli = @("mcp", "add", $Name, "-s", "user", "-e", "FLW_API_KEY=$Token")
   if ($Messaging) { $cli += @("-e", "FLW_ENABLE_MESSAGING=true") }
   $cli += @("--", $Command) + $CmdArgs
-  & claude @cli
+  $code = Invoke-Native "claude" $cli
+  if ($code -ne 0) { throw "claude mcp add falhou (código $code)" }
   Write-Host "  registrado no escopo de usuário. Verifique com: claude mcp list"
 }
 
