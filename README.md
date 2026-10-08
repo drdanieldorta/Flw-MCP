@@ -113,20 +113,6 @@ Com o pacote no npm, o comando fica apenas `npx -y flw-mcp`.
 | `FLW_TIMEOUT_MS` | não | `30000` | Timeout por requisição. |
 | `FLW_LOG_LEVEL` | não | `info` | `debug` mostra cada requisição no stderr. |
 
-Claude Desktop (`claude_desktop_config.json`) e Cursor (`~/.cursor/mcp.json`) usam o mesmo formato:
-```json
-{
-  "mcpServers": {
-    "flw": {
-      "command": "npx",
-      "args": ["-y", "mdia-flw-mcp"],
-      "env": { "FLW_API_KEY": "pn_SEU_TOKEN" }
-    }
-  }
-}
-```
-No Windows use `"command": "cmd"` e `"args": ["/c", "npx", "-y", "mdia-flw-mcp"]`.
-
 ---
 
 ## Ferramentas disponíveis
@@ -238,7 +224,7 @@ Todas têm prefixo `flw_`. Listagens são paginadas (`pageNumber`, `pageSize` at
 
 ```bash
 git clone https://github.com/drdanieldorta/Flw-MCP.git
-cd mdia-flw-mcp
+cd Flw-MCP
 npm install
 npm test               # build + testes (sem rede, usa servidor HTTP simulado)
 npm run inspect        # abre o MCP Inspector contra o servidor compilado

@@ -5,7 +5,7 @@ Uso direto da internet (precisa de Node.js 18+ e Git):
   powershell -ExecutionPolicy Bypass -c "iwr -useb https://raw.githubusercontent.com/drdanieldorta/Flw-MCP/HEAD/scripts/install.ps1 | iex"
 
 Uso a partir do repositório clonado (compila e registra dist\index.js; não precisa de rede depois):
-  git clone https://github.com/drdanieldorta/Flw-MCP.git ; cd mdia-flw-mcp
+  git clone https://github.com/drdanieldorta/Flw-MCP.git ; cd Flw-MCP
   powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Client all
 
 Parâmetros:

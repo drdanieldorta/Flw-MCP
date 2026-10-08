@@ -5,7 +5,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/drdanieldorta/Flw-MCP/HEAD/scripts/install.sh | bash -s -- --client all --token pn_SEU_TOKEN
 #
 # Uso a partir do repositório clonado (compila e registra dist/index.js; não precisa de rede depois):
-#   git clone https://github.com/drdanieldorta/Flw-MCP.git && cd mdia-flw-mcp
+#   git clone https://github.com/drdanieldorta/Flw-MCP.git && cd Flw-MCP
 #   ./scripts/install.sh --client all
 #
 # Opções:
