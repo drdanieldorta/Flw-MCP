@@ -99,10 +99,12 @@ Codex CLI, se preferir editar `~/.codex/config.toml`:
 [mcp_servers.flw]
 command = "npx"
 args = ["-y", "github:drdanieldorta/Flw-MCP"]
+startup_timeout_sec = 60
 
 [mcp_servers.flw.env]
 FLW_API_KEY = "pn_SEU_TOKEN"
 ```
+`startup_timeout_sec = 60` evita que o Codex desista na primeira inicialização, que compila o servidor (cerca de 20 s). Ao usar `codex mcp add`, acrescente essa linha depois em `~/.codex/config.toml` se o Codex marcar o servidor como falho na primeira vez.
 
 ---
 
@@ -233,6 +235,7 @@ Todas têm prefixo `flw_`. Listagens são paginadas (`pageNumber`, `pageSize` at
 | `ENOENT npx` no Windows | Clientes MCP não executam `npx.cmd` direto | Use `cmd /c npx ...` (o instalador já faz isso). |
 | `ERROR_UNAUTHORIZED` em `flw_status` | Token inválido ou expirado | Gere um novo token na plataforma. |
 | `429` | Rate limit | Aguarde; o servidor já refaz a tentativa automaticamente. |
+| Codex marca `flw` como falho só na primeira vez | Compilação inicial excede o tempo limite padrão (10 s) | Rode de novo, ou adicione `startup_timeout_sec = 60` em `[mcp_servers.flw]` no `config.toml`. |
 
 ---
 

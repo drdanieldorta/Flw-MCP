@@ -252,6 +252,7 @@ function Install-Codex {
     "[mcp_servers.$Name]",
     "command = $(ConvertTo-TomlString $Command)",
     "args = [$argList]",
+    "startup_timeout_sec = 60",
     "",
     "[mcp_servers.$Name.env]",
     "FLW_API_KEY = $(ConvertTo-TomlString $Token)"

@@ -222,6 +222,7 @@ install_codex() {
       `[mcp_servers.${name}]`,
       `command = ${JSON.stringify(command)}`,
       `args = ${JSON.stringify(args)}`,
+      `startup_timeout_sec = 60`,
       ``,
       `[mcp_servers.${name}.env]`,
       `FLW_API_KEY = ${JSON.stringify(token)}`,
