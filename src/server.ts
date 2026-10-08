@@ -4,7 +4,7 @@ import { CrmHttpClient } from "./lib/http.js";
 import { setLogLevel, log } from "./lib/logger.js";
 import { registerAllTools } from "./tools/index.js";
 
-export const SERVER_NAME = "mdia-flw-mcp";
+export const SERVER_NAME = "flw-mcp";
 export const SERVER_VERSION = "0.1.0";
 
 /** Monta o servidor com todas as ferramentas registradas. Não conecta transporte. */

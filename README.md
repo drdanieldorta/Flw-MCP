@@ -1,4 +1,4 @@
-# mdia-flw-mcp
+# Flw-MCP
 
 Servidor **MCP** para o CRM da MDIA na plataforma **FLW** (Helena / WTS Chat).
 Conecta o **Claude Code**, o **Codex CLI**, o Claude Desktop e o Cursor à API do FLW para consultar e atualizar **contatos, etiquetas, carteiras, painéis, cards, sequências e atendimentos**.
@@ -19,15 +19,15 @@ Pré-requisitos: **Node.js 18+** (https://nodejs.org) e **Git** (https://git-scm
 
 **Claude Code**
 ```bash
-claude mcp add flw -s user -e FLW_API_KEY=pn_SEU_TOKEN -- npx -y github:drdanieldorta/mdia-flw-mcp
+claude mcp add flw -s user -e FLW_API_KEY=pn_SEU_TOKEN -- npx -y github:drdanieldorta/Flw-MCP
 ```
 
 **Codex CLI**
 ```bash
-codex mcp add flw --env FLW_API_KEY=pn_SEU_TOKEN -- npx -y github:drdanieldorta/mdia-flw-mcp
+codex mcp add flw --env FLW_API_KEY=pn_SEU_TOKEN -- npx -y github:drdanieldorta/Flw-MCP
 ```
 
-**No Windows**, troque `npx -y github:...` por `cmd /c npx -y github:drdanieldorta/mdia-flw-mcp` nos dois comandos.
+**No Windows**, troque `npx -y github:...` por `cmd /c npx -y github:drdanieldorta/Flw-MCP` nos dois comandos.
 
 **Teste:** abra o Claude Code ou o Codex e peça *"use flw_status para verificar a conexão com o FLW"*.
 
@@ -41,12 +41,12 @@ Registra o servidor no Claude Code, Codex, Claude Desktop e Cursor. Pede o token
 
 **Windows (PowerShell)**
 ```powershell
-powershell -ExecutionPolicy Bypass -c "$env:FLW_API_KEY='pn_SEU_TOKEN'; iwr -useb https://raw.githubusercontent.com/drdanieldorta/mdia-flw-mcp/HEAD/scripts/install.ps1 | iex"
+powershell -ExecutionPolicy Bypass -c "$env:FLW_API_KEY='pn_SEU_TOKEN'; iwr -useb https://raw.githubusercontent.com/drdanieldorta/Flw-MCP/HEAD/scripts/install.ps1 | iex"
 ```
 
 **Linux / macOS**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/drdanieldorta/mdia-flw-mcp/HEAD/scripts/install.sh | bash -s -- --client all --token pn_SEU_TOKEN
+curl -fsSL https://raw.githubusercontent.com/drdanieldorta/Flw-MCP/HEAD/scripts/install.sh | bash -s -- --client all --token pn_SEU_TOKEN
 ```
 
 Opções: `--client claude-code | codex | claude-desktop | cursor | all` e `--messaging` (liga o envio de mensagens). No PowerShell: `-Client` e `-Messaging`.
@@ -70,19 +70,19 @@ Cursor: `~/.cursor/mcp.json`.
   "mcpServers": {
     "flw": {
       "command": "npx",
-      "args": ["-y", "github:drdanieldorta/mdia-flw-mcp"],
+      "args": ["-y", "github:drdanieldorta/Flw-MCP"],
       "env": { "FLW_API_KEY": "pn_SEU_TOKEN" }
     }
   }
 }
 ```
-No Windows use `"command": "cmd"` e `"args": ["/c", "npx", "-y", "github:drdanieldorta/mdia-flw-mcp"]`.
+No Windows use `"command": "cmd"` e `"args": ["/c", "npx", "-y", "github:drdanieldorta/Flw-MCP"]`.
 
 Codex CLI, se preferir editar `~/.codex/config.toml`:
 ```toml
 [mcp_servers.flw]
 command = "npx"
-args = ["-y", "github:drdanieldorta/mdia-flw-mcp"]
+args = ["-y", "github:drdanieldorta/Flw-MCP"]
 
 [mcp_servers.flw.env]
 FLW_API_KEY = "pn_SEU_TOKEN"
@@ -92,13 +92,13 @@ FLW_API_KEY = "pn_SEU_TOKEN"
 
 ## Releases e npm (opcional, pelo dono do repositório)
 
-Ao enviar uma tag `v*` (`git tag v0.1.0 && git push origin v0.1.0`), o workflow `release.yml` roda os testes, cria um release no GitHub com o pacote `mdia-flw-mcp.tgz` anexado e, se o secret `NPM_TOKEN` existir, publica no npm.
+Ao enviar uma tag `v*` (`git tag v0.1.0 && git push origin v0.1.0`), o workflow `release.yml` roda os testes, cria um release no GitHub com o pacote `flw-mcp.tgz` anexado e, se o secret `NPM_TOKEN` existir, publica no npm.
 
 Com o release publicado, a instalação dispensa Git:
 ```bash
-claude mcp add flw -s user -e FLW_API_KEY=pn_SEU_TOKEN -- npx -y https://github.com/drdanieldorta/mdia-flw-mcp/releases/latest/download/mdia-flw-mcp.tgz
+claude mcp add flw -s user -e FLW_API_KEY=pn_SEU_TOKEN -- npx -y https://github.com/drdanieldorta/Flw-MCP/releases/latest/download/flw-mcp.tgz
 ```
-Com o pacote no npm, o comando fica apenas `npx -y mdia-flw-mcp`.
+Com o pacote no npm, o comando fica apenas `npx -y flw-mcp`.
 
 ---
 
@@ -237,7 +237,7 @@ Todas têm prefixo `flw_`. Listagens são paginadas (`pageNumber`, `pageSize` at
 ## Desenvolvimento
 
 ```bash
-git clone https://github.com/drdanieldorta/mdia-flw-mcp.git
+git clone https://github.com/drdanieldorta/Flw-MCP.git
 cd mdia-flw-mcp
 npm install
 npm test               # build + testes (sem rede, usa servidor HTTP simulado)

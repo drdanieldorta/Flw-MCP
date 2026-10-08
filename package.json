@@ -1,15 +1,15 @@
 {
-  "name": "mdia-flw-mcp",
+  "name": "flw-mcp",
   "version": "0.1.0",
-  "description": "Servidor MCP (Model Context Protocol) para o CRM da MDIA. Instalável em qualquer máquina com um único comando.",
+  "description": "Servidor MCP (Model Context Protocol) para o CRM da plataforma FLW (Helena / WTS Chat). Instalável em qualquer máquina com um único comando.",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/drdanieldorta/mdia-flw-mcp.git"
+    "url": "https://github.com/drdanieldorta/Flw-MCP.git"
   },
   "bin": {
-    "mdia-flw-mcp": "dist/index.js"
+    "flw-mcp": "dist/index.js"
   },
   "main": "dist/index.js",
   "files": [
@@ -24,7 +24,7 @@
     "prepare": "npm run build",
     "dev": "tsx src/index.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "npm run build && node --test \"test/**/*.test.mjs\"",
+    "test": "npm run build && node --test test/config.test.mjs test/http.test.mjs test/server.test.mjs",
     "inspect": "npx -y @modelcontextprotocol/inspector node dist/index.js"
   },
   "dependencies": {
@@ -50,5 +50,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://github.com/drdanieldorta/mdia-flw-mcp#readme"
+  "homepage": "https://github.com/drdanieldorta/Flw-MCP#readme"
 }

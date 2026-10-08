@@ -72,7 +72,7 @@ export class CrmHttpClient {
 
     const headers: Record<string, string> = {
       Accept: "application/json",
-      "User-Agent": "mdia-flw-mcp/0.1.0",
+      "User-Agent": "flw-mcp/0.1.0",
       Authorization: `Bearer ${this.cfg.apiKey}`,
       ...(opts.headers ?? {}),
     };

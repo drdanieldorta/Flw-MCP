@@ -1,8 +1,8 @@
 # Dispara ao enviar uma tag v* (ex.: git tag v0.1.0 && git push origin v0.1.0).
 # 1. Roda os testes.
-# 2. Cria um release no GitHub com o pacote mdia-flw-mcp.tgz anexado, o que
+# 2. Cria um release no GitHub com o pacote flw-mcp.tgz anexado, o que
 #    permite instalar sem Git e sem npm publish:
-#    npx -y https://github.com/drdanieldorta/mdia-flw-mcp/releases/latest/download/mdia-flw-mcp.tgz
+#    npx -y https://github.com/drdanieldorta/Flw-MCP/releases/latest/download/flw-mcp.tgz
 # 3. Publica no npm somente se o secret NPM_TOKEN existir.
 name: Release
 
@@ -29,11 +29,11 @@ jobs:
       - name: Empacotar
         run: |
           npm pack
-          mv mdia-flw-mcp-*.tgz mdia-flw-mcp.tgz
+          mv flw-mcp-*.tgz flw-mcp.tgz
       - name: Criar release no GitHub com o pacote anexado
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" mdia-flw-mcp.tgz --title "$GITHUB_REF_NAME" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" flw-mcp.tgz --title "$GITHUB_REF_NAME" --generate-notes
       - name: Publicar no npm (só se NPM_TOKEN estiver configurado)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -17,7 +17,7 @@ function emit(level: LogLevel, msg: string, extra?: unknown): void {
   if (ORDER[level] < ORDER[current]) return;
   const ts = new Date().toISOString();
   const tail = extra === undefined ? "" : ` ${safeJson(extra)}`;
-  process.stderr.write(`[${ts}] [mdia-flw-mcp] ${level.toUpperCase()} ${msg}${tail}\n`);
+  process.stderr.write(`[${ts}] [flw-mcp] ${level.toUpperCase()} ${msg}${tail}\n`);
 }
 
 function safeJson(v: unknown): string {

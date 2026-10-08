@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Instalador do mdia-flw-mcp para Linux/macOS.
+# Instalador do flw-mcp para Linux/macOS.
 #
 # Uso direto da internet (precisa de Node.js 18+ e Git):
-#   curl -fsSL https://raw.githubusercontent.com/drdanieldorta/mdia-flw-mcp/HEAD/scripts/install.sh | bash -s -- --client all --token pn_SEU_TOKEN
+#   curl -fsSL https://raw.githubusercontent.com/drdanieldorta/Flw-MCP/HEAD/scripts/install.sh | bash -s -- --client all --token pn_SEU_TOKEN
 #
 # Uso a partir do repositório clonado (compila e registra dist/index.js; não precisa de rede depois):
-#   git clone https://github.com/drdanieldorta/mdia-flw-mcp.git && cd mdia-flw-mcp
+#   git clone https://github.com/drdanieldorta/Flw-MCP.git && cd mdia-flw-mcp
 #   ./scripts/install.sh --client all
 #
 # Opções:
 #   --client   claude-code | codex | claude-desktop | cursor | all   (padrão: all)
 #   --token    token permanente da API (ou exporte FLW_API_KEY; senão, pergunta)
-#   --source   pacote a executar via npx (padrão fora do clone: github:drdanieldorta/mdia-flw-mcp;
-#              aceita também mdia-flw-mcp após publicar no npm, ou a URL do .tgz de um release)
+#   --source   pacote a executar via npx (padrão fora do clone: github:drdanieldorta/Flw-MCP;
+#              aceita também flw-mcp após publicar no npm, ou a URL do .tgz de um release)
 #   --messaging  habilita as ferramentas de envio de mensagem (FLW_ENABLE_MESSAGING=true)
 set -euo pipefail
 
@@ -55,7 +55,7 @@ if [[ -z "$SOURCE" && -n "$REPO_ROOT" && -f "$REPO_ROOT/package.json" ]]; then
   (cd "$REPO_ROOT" && npm install --no-audit --no-fund && npm run build)
   COMMAND="node"; ARGS=("$REPO_ROOT/dist/index.js")
 else
-  SOURCE="${SOURCE:-github:drdanieldorta/mdia-flw-mcp}"
+  SOURCE="${SOURCE:-github:drdanieldorta/Flw-MCP}"
   if [[ "$SOURCE" == github:* || "$SOURCE" == git+* ]] && ! command -v git >/dev/null 2>&1; then
     echo "Git não encontrado e é necessário para instalar de $SOURCE. Instale o Git (https://git-scm.com)" >&2
     echo "ou use --source com a URL do pacote de um release (.tgz)." >&2

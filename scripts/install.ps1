@@ -1,18 +1,18 @@
 <#
-Instalador do mdia-flw-mcp para Windows (PowerShell 5.1 ou superior).
+Instalador do flw-mcp para Windows (PowerShell 5.1 ou superior).
 
 Uso direto da internet (precisa de Node.js 18+ e Git):
-  powershell -ExecutionPolicy Bypass -c "iwr -useb https://raw.githubusercontent.com/drdanieldorta/mdia-flw-mcp/HEAD/scripts/install.ps1 | iex"
+  powershell -ExecutionPolicy Bypass -c "iwr -useb https://raw.githubusercontent.com/drdanieldorta/Flw-MCP/HEAD/scripts/install.ps1 | iex"
 
 Uso a partir do repositório clonado (compila e registra dist\index.js; não precisa de rede depois):
-  git clone https://github.com/drdanieldorta/mdia-flw-mcp.git ; cd mdia-flw-mcp
+  git clone https://github.com/drdanieldorta/Flw-MCP.git ; cd mdia-flw-mcp
   powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Client all
 
 Parâmetros:
   -Client     claude-code | codex | claude-desktop | cursor | all   (padrão: all)
   -Token      token permanente da API (ou defina $env:FLW_API_KEY; senão, pergunta)
-  -Source     pacote a executar via npx (padrão fora do clone: github:drdanieldorta/mdia-flw-mcp;
-              aceita também mdia-flw-mcp após publicar no npm, ou a URL do .tgz de um release)
+  -Source     pacote a executar via npx (padrão fora do clone: github:drdanieldorta/Flw-MCP;
+              aceita também flw-mcp após publicar no npm, ou a URL do .tgz de um release)
   -Messaging  habilita as ferramentas de envio de mensagem
 #>
 param(
@@ -39,7 +39,7 @@ if (-not $Source) {
   if ($RepoRoot -and (Test-Path (Join-Path $RepoRoot "package.json"))) {
     $LocalMode = $true
   } else {
-    $Source = "github:drdanieldorta/mdia-flw-mcp"
+    $Source = "github:drdanieldorta/Flw-MCP"
   }
 }
 if (-not $LocalMode -and ($Source.StartsWith("github:") -or $Source.StartsWith("git+")) -and -not (Get-Command git -ErrorAction SilentlyContinue)) {
