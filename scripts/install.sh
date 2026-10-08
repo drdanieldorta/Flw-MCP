@@ -1,20 +1,24 @@
 #!/usr/bin/env bash
 # Instalador do mdia-flw-mcp para Linux/macOS.
 #
-# Uso:
-#   curl -fsSL https://raw.githubusercontent.com/drdanieldorta/mdia-flw-mcp/main/scripts/install.sh | bash -s -- --client claude-code
-#   ./scripts/install.sh --client claude-desktop --token pn_xxx
+# Modo recomendado (repositório clonado na máquina):
+#   git clone https://github.com/drdanieldorta/mdia-flw-mcp.git
+#   cd mdia-flw-mcp
+#   ./scripts/install.sh --client all
+#
+# O script detecta que está dentro do repositório, roda npm install + build e
+# registra o servidor apontando para dist/index.js (não depende de rede depois).
 #
 # Opções:
-#   --client   claude-code | claude-desktop | cursor | all   (padrão: all)
-#   --token    token permanente da API (ou exporte FLW_API_KEY antes)
-#   --source   pacote a executar com npx (padrão: github:drdanieldorta/mdia-flw-mcp)
+#   --client   claude-code | codex | claude-desktop | cursor | all   (padrão: all)
+#   --token    token permanente da API (ou exporte FLW_API_KEY; senão, pergunta)
+#   --source   pacote a executar via npx em vez do modo local (ex.: mdia-flw-mcp após publicar no npm)
 #   --messaging  habilita as ferramentas de envio de mensagem (FLW_ENABLE_MESSAGING=true)
 set -euo pipefail
 
 CLIENT="all"
 TOKEN="${FLW_API_KEY:-}"
-SOURCE="github:drdanieldorta/mdia-flw-mcp"
+SOURCE=""
 MESSAGING="false"
 NAME="flw"
 
@@ -24,7 +28,7 @@ while [[ $# -gt 0 ]]; do
     --token) TOKEN="$2"; shift 2 ;;
     --source) SOURCE="$2"; shift 2 ;;
     --messaging) MESSAGING="true"; shift ;;
-    -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
     *) echo "Opção desconhecida: $1" >&2; exit 1 ;;
   esac
 done
@@ -39,6 +43,25 @@ if [[ "$NODE_MAJOR" -lt 18 ]]; then
   exit 1
 fi
 
+# --- Modo: local (clone) ou npx (pacote) --------------------------------------
+REPO_ROOT=""
+if [[ -n "${BASH_SOURCE[0]:-}" && -f "${BASH_SOURCE[0]}" ]]; then
+  REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+fi
+COMMAND=""
+ARGS=()
+if [[ -n "$SOURCE" ]]; then
+  COMMAND="npx"; ARGS=("-y" "$SOURCE")
+elif [[ -n "$REPO_ROOT" && -f "$REPO_ROOT/package.json" ]]; then
+  echo "==> Compilando a partir de $REPO_ROOT"
+  (cd "$REPO_ROOT" && npm install --no-audit --no-fund && npm run build)
+  COMMAND="node"; ARGS=("$REPO_ROOT/dist/index.js")
+else
+  echo "Execute este script de dentro do repositório clonado (scripts/install.sh) ou informe --source <pacote npm>." >&2
+  exit 1
+fi
+
+# --- Token ----------------------------------------------------------------------
 if [[ -z "$TOKEN" ]]; then
   if [[ -t 0 ]]; then
     read -r -s -p "Cole o token permanente da API (Ajustes > Integrações > Integração via API): " TOKEN
@@ -53,11 +76,11 @@ if [[ -z "$TOKEN" ]]; then echo "Token vazio." >&2; exit 1; fi
 # Monta o bloco JSON do servidor, usado pelos clientes baseados em arquivo.
 server_json() {
   node -e '
-    const [source, token, messaging] = process.argv.slice(1);
+    const [command, token, messaging, ...args] = process.argv.slice(1);
     const env = { FLW_API_KEY: token };
     if (messaging === "true") env.FLW_ENABLE_MESSAGING = "true";
-    console.log(JSON.stringify({ command: "npx", args: ["-y", source], env }));
-  ' "$SOURCE" "$TOKEN" "$MESSAGING"
+    console.log(JSON.stringify({ command, args, env }));
+  ' "$COMMAND" "$TOKEN" "$MESSAGING" "${ARGS[@]}"
 }
 
 # Insere/atualiza mcpServers.<NAME> em um arquivo JSON, criando-o se preciso.
@@ -69,7 +92,7 @@ merge_json_file() {
     const [file, name, serverJson] = process.argv.slice(1);
     let cfg = {};
     if (fs.existsSync(file)) {
-      const raw = fs.readFileSync(file, "utf8").trim();
+      const raw = fs.readFileSync(file, "utf8").replace(/^﻿/, "").trim();
       if (raw) { try { cfg = JSON.parse(raw); } catch (e) { console.error("JSON inválido em " + file + ": " + e.message); process.exit(1); } }
     }
     cfg.mcpServers = cfg.mcpServers || {};
@@ -88,8 +111,41 @@ install_claude_code() {
   claude mcp remove "$NAME" -s user >/dev/null 2>&1 || true
   local extra=()
   [[ "$MESSAGING" == "true" ]] && extra=(-e FLW_ENABLE_MESSAGING=true)
-  claude mcp add "$NAME" -s user -e "FLW_API_KEY=$TOKEN" "${extra[@]}" -- npx -y "$SOURCE"
+  claude mcp add "$NAME" -s user -e "FLW_API_KEY=$TOKEN" "${extra[@]}" -- "$COMMAND" "${ARGS[@]}"
   echo "  registrado no escopo de usuário. Verifique com: claude mcp list"
+}
+
+# Codex CLI lê ~/.codex/config.toml. Substitui o bloco [mcp_servers.flw] se já existir.
+install_codex() {
+  echo "==> Codex CLI"
+  local file="${CODEX_HOME:-$HOME/.codex}/config.toml"
+  mkdir -p "$(dirname "$file")"
+  node -e '
+    const fs = require("fs");
+    const [file, name, command, token, messaging, ...args] = process.argv.slice(1);
+    const lines = fs.existsSync(file) ? fs.readFileSync(file, "utf8").split(/\r?\n/) : [];
+    const kept = [];
+    let skipping = false;
+    for (const line of lines) {
+      const header = line.match(/^\s*\[([^\]]+)\]/);
+      if (header) skipping = header[1] === `mcp_servers.${name}` || header[1].startsWith(`mcp_servers.${name}.`);
+      if (!skipping) kept.push(line);
+    }
+    while (kept.length && kept[kept.length - 1].trim() === "") kept.pop();
+    const block = [
+      `[mcp_servers.${name}]`,
+      `command = ${JSON.stringify(command)}`,
+      `args = ${JSON.stringify(args)}`,
+      ``,
+      `[mcp_servers.${name}.env]`,
+      `FLW_API_KEY = ${JSON.stringify(token)}`,
+      ...(messaging === "true" ? [`FLW_ENABLE_MESSAGING = "true"`] : []),
+    ];
+    const out = (kept.length ? kept.join("\n") + "\n\n" : "") + block.join("\n") + "\n";
+    fs.writeFileSync(file, out);
+    console.log("  atualizado: " + file);
+  ' "$file" "$NAME" "$COMMAND" "$TOKEN" "$MESSAGING" "${ARGS[@]}"
+  echo "  abra o Codex e confira com: codex mcp list"
 }
 
 install_claude_desktop() {
@@ -113,10 +169,12 @@ install_cursor() {
 status=0
 case "$CLIENT" in
   claude-code) install_claude_code || status=1 ;;
+  codex) install_codex || status=1 ;;
   claude-desktop) install_claude_desktop || status=1 ;;
   cursor) install_cursor || status=1 ;;
   all)
     install_claude_code || true
+    install_codex || true
     install_claude_desktop || true
     install_cursor || true
     ;;

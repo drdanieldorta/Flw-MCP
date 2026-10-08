@@ -35,5 +35,20 @@
     "@types/node": "^22.15.0",
     "tsx": "^4.20.0",
     "typescript": "^5.8.0"
-  }
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "crm",
+    "flw",
+    "helena",
+    "wts-chat",
+    "whatsapp",
+    "claude",
+    "codex"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/drdanieldorta/mdia-flw-mcp#readme"
 }

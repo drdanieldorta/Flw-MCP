@@ -1,79 +1,92 @@
 # mdia-flw-mcp
 
-Servidor **MCP (Model Context Protocol)** para o CRM da MDIA na plataforma **FLW** (white-label de Helena / WTS Chat).
-Permite que Claude Desktop, Claude Code, Cursor e qualquer cliente MCP consultem e atualizem **contatos, etiquetas, carteiras, painéis, cards, sequências e atendimentos** usando a API pública da plataforma.
-
-Instalação em um comando, em qualquer máquina com Node.js 18+.
+Servidor **MCP** para o CRM da MDIA na plataforma **FLW** (Helena / WTS Chat).
+Conecta o **Claude Code**, o **Codex CLI**, o Claude Desktop e o Cursor à API do FLW para consultar e atualizar **contatos, etiquetas, carteiras, painéis, cards, sequências e atendimentos**.
 
 ---
 
-## 1. Pré-requisitos
+## Instalação em 2 passos
 
-| Item | Como obter |
-|------|------------|
-| Node.js 18 ou superior | https://nodejs.org |
-| Token permanente da API | Na plataforma: **Ajustes > Integrações > Integração via API (Configurar) > Novo**. Formato `pn_...` |
+### Passo 1: gere o token na plataforma FLW
 
-> Tokens sem uso por mais de 15 dias são excluídos automaticamente pela plataforma. Se parar de funcionar, gere um novo.
+**Ajustes > Integrações > Integração via API (Configurar) > Novo**. Copie o token (`pn_...`).
 
----
+> Tokens sem uso por mais de 15 dias são apagados pela plataforma. Se parar de funcionar, gere outro.
 
-## 2. Instalação rápida
+### Passo 2: cole um comando
 
-### Linux / macOS
+Pré-requisito único: **Node.js 18+** instalado (https://nodejs.org).
 
+**Claude Code**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/drdanieldorta/mdia-flw-mcp/main/scripts/install.sh | bash -s -- --client all --token pn_SEU_TOKEN
+claude mcp add flw -s user -e FLW_API_KEY=pn_SEU_TOKEN -- npx -y mdia-flw-mcp
 ```
 
-### Windows (PowerShell)
+**Codex CLI**
+```bash
+codex mcp add flw --env FLW_API_KEY=pn_SEU_TOKEN -- npx -y mdia-flw-mcp
+```
+Ou edite `~/.codex/config.toml`:
+```toml
+[mcp_servers.flw]
+command = "npx"
+args = ["-y", "mdia-flw-mcp"]
 
+[mcp_servers.flw.env]
+FLW_API_KEY = "pn_SEU_TOKEN"
+```
+
+**Windows (Claude Code ou Codex):** troque `npx -y mdia-flw-mcp` por `cmd /c npx -y mdia-flw-mcp`.
+
+**Teste:** peça ao assistente *"use flw_status para verificar a conexão com o FLW"*.
+
+> **Status do pacote:** os comandos acima dependem do pacote `mdia-flw-mcp` publicado no npm.
+> Enquanto a publicação não acontece, use a [instalação a partir do repositório](#instalação-a-partir-do-repositório) abaixo.
+
+---
+
+## Instalação a partir do repositório
+
+Funciona hoje, sem npm, em qualquer máquina com acesso a este repositório. O instalador compila o projeto e registra o servidor no Claude Code, Codex, Claude Desktop e Cursor.
+
+**Windows (PowerShell)**
 ```powershell
-powershell -ExecutionPolicy Bypass -c "iwr -useb https://raw.githubusercontent.com/drdanieldorta/mdia-flw-mcp/main/scripts/install.ps1 | iex"
+git clone https://github.com/drdanieldorta/mdia-flw-mcp.git
+cd mdia-flw-mcp
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Client all
 ```
 
-Opções: `--client claude-code | claude-desktop | cursor | all` e `--messaging` (habilita envio de mensagens).
-
-O instalador registra o servidor como `flw`, executado via `npx -y github:drdanieldorta/mdia-flw-mcp`. Nada é instalado globalmente.
-
----
-
-## 3. Instalação manual por cliente
-
-### Claude Code
-
+**Linux / macOS**
 ```bash
-claude mcp add flw -s user -e FLW_API_KEY=pn_SEU_TOKEN -- npx -y github:drdanieldorta/mdia-flw-mcp
+git clone https://github.com/drdanieldorta/mdia-flw-mcp.git
+cd mdia-flw-mcp
+./scripts/install.sh --client all
 ```
 
-### Claude Desktop
+O instalador pede o token e registra o servidor como `flw`. Opções: `--client claude-code | codex | claude-desktop | cursor | all` e `--messaging` (liga o envio de mensagens).
 
-Arquivo `claude_desktop_config.json`
-(macOS: `~/Library/Application Support/Claude/`, Windows: `%APPDATA%\Claude\`):
-
-```json
-{
-  "mcpServers": {
-    "flw": {
-      "command": "npx",
-      "args": ["-y", "github:drdanieldorta/mdia-flw-mcp"],
-      "env": { "FLW_API_KEY": "pn_SEU_TOKEN" }
-    }
-  }
-}
-```
-
-### Cursor
-
-Arquivo `~/.cursor/mcp.json` (ou `.cursor/mcp.json` no projeto) com o mesmo bloco acima.
-
-### Teste
-
-Peça ao assistente: *"use flw_status para verificar a conexão com o FLW"*.
+Sem Git instalado: baixe o ZIP pelo botão **Code > Download ZIP** no GitHub, extraia e rode o mesmo comando dentro da pasta.
 
 ---
 
-## 4. Variáveis de ambiente
+## Publicar no npm (uma vez, pelo dono do repositório)
+
+Isso é o que torna a instalação de uma linha possível para qualquer pessoa.
+
+**Opção A, manual**
+```bash
+npm login
+npm publish --access public
+```
+
+**Opção B, automática pelo GitHub**
+1. Crie um token *Automation* em npmjs.com > Access Tokens.
+2. No GitHub: Settings > Secrets and variables > Actions > `NPM_TOKEN`.
+3. Publique criando uma tag: `git tag v0.1.0 && git push --tags`. O workflow `publish.yml` roda os testes e publica.
+
+---
+
+## Configuração (variáveis de ambiente)
 
 | Variável | Obrigatória | Padrão | Função |
 |----------|-------------|--------|--------|
@@ -84,11 +97,25 @@ Peça ao assistente: *"use flw_status para verificar a conexão com o FLW"*.
 | `FLW_TIMEOUT_MS` | não | `30000` | Timeout por requisição. |
 | `FLW_LOG_LEVEL` | não | `info` | `debug` mostra cada requisição no stderr. |
 
+Claude Desktop (`claude_desktop_config.json`) e Cursor (`~/.cursor/mcp.json`) usam o mesmo formato:
+```json
+{
+  "mcpServers": {
+    "flw": {
+      "command": "npx",
+      "args": ["-y", "mdia-flw-mcp"],
+      "env": { "FLW_API_KEY": "pn_SEU_TOKEN" }
+    }
+  }
+}
+```
+No Windows use `"command": "cmd"` e `"args": ["/c", "npx", "-y", "mdia-flw-mcp"]`.
+
 ---
 
-## 5. Ferramentas disponíveis
+## Ferramentas disponíveis
 
-Todas as ferramentas têm prefixo `flw_`. Listagens são paginadas (`pageNumber`, `pageSize` até 100) e aceitam filtros de data em ISO 8601 UTC.
+Todas têm prefixo `flw_`. Listagens são paginadas (`pageNumber`, `pageSize` até 100) e aceitam filtros de data em ISO 8601 UTC.
 
 ### Diagnóstico
 | Ferramenta | O que faz |
@@ -113,7 +140,7 @@ Todas as ferramentas têm prefixo `flw_`. Listagens são paginadas (`pageNumber`
 | `flw_list_contacts` | Listagem simples por status. |
 | `flw_get_contact` | Por ID ou telefone. |
 | `flw_create_contact` | Cria, com opção de upsert. |
-| `flw_update_contact` | Atualiza só os campos informados (o array `fields` da API é derivado automaticamente). |
+| `flw_update_contact` | Atualiza só os campos informados. |
 | `flw_update_contact_tags` | Insere, remove ou substitui etiquetas. |
 
 ### CRM (painéis e cards)
@@ -152,7 +179,7 @@ Todas as ferramentas têm prefixo `flw_`. Listagens são paginadas (`pageNumber`
 
 ---
 
-## 6. Fluxos típicos
+## Fluxos típicos
 
 **Criar um negócio para um contato**
 1. `flw_get_contact` (telefone) ou `flw_create_contact` com `upsert: true`
@@ -170,27 +197,35 @@ Todas as ferramentas têm prefixo `flw_`. Listagens são paginadas (`pageNumber`
 
 ---
 
-## 7. Limites e segurança
+## Limites e segurança
 
 - **Rate limit da API**: 1.000 requisições a cada 5 minutos e 200 a cada 5 segundos, por conta. O cliente HTTP aplica retry com backoff e respeita `Retry-After` em 429.
-- O token dá acesso total à conta. Guarde-o só na configuração do cliente MCP, nunca em arquivos versionados.
-- Envio de mensagens e requisições cruas ficam desligados por padrão, exatamente para evitar ações de alto impacto acidentais.
+- O token dá acesso total à conta. Gere um token por máquina, com nome identificável, para poder revogar isoladamente.
+- Envio de mensagens e requisições cruas ficam desligados por padrão, para evitar ações de alto impacto acidentais.
 - Logs vão apenas para o stderr (o stdout pertence ao protocolo MCP).
 
 ---
 
-## 8. Desenvolvimento
+## Problemas comuns
+
+| Sintoma | Causa | Solução |
+|---------|-------|---------|
+| `404` ao baixar o script via `iwr`/`curl` | Repositório privado | Clone o repositório e rode o instalador local, ou publique no npm. |
+| `ENOENT npx` no Windows | Clientes MCP não executam `npx.cmd` direto | Use `cmd /c npx ...` (o instalador já faz isso). |
+| `ERROR_UNAUTHORIZED` em `flw_status` | Token inválido ou expirado | Gere um novo token na plataforma. |
+| `429` | Rate limit | Aguarde; o servidor já refaz a tentativa automaticamente. |
+
+---
+
+## Desenvolvimento
 
 ```bash
 git clone https://github.com/drdanieldorta/mdia-flw-mcp.git
 cd mdia-flw-mcp
 npm install
-cp .env.example .env   # preencha FLW_API_KEY
 npm test               # build + testes (sem rede, usa servidor HTTP simulado)
 npm run inspect        # abre o MCP Inspector contra o servidor compilado
 ```
-
-Estrutura:
 
 ```
 src/
@@ -203,19 +238,6 @@ src/
   tools/*.ts        um arquivo por domínio; registrados em tools/index.ts
 ```
 
-Para adicionar um endpoint: crie ou edite o arquivo do domínio em `src/tools/`, use `ctx.http` (nunca `fetch` direto), descreva todos os parâmetros com `.describe()` e marque `annotations` (`readOnlyHint`, `destructiveHint`).
+Para adicionar um endpoint: edite o arquivo do domínio em `src/tools/`, use `ctx.http` (nunca `fetch` direto), descreva todos os parâmetros com `.describe()` e marque `annotations` (`readOnlyHint`, `destructiveHint`).
 
 Referência da API: https://helena.readme.io/reference
-
----
-
-## 9. Publicação (opcional, deixa a instalação mais rápida)
-
-Hoje o `npx` instala direto do GitHub e compila na primeira execução (requer acesso ao repositório se ele for privado). Publicar no npm elimina a compilação local:
-
-```bash
-npm version patch
-npm publish --access public
-```
-
-Depois troque `github:drdanieldorta/mdia-flw-mcp` por `mdia-flw-mcp` nos comandos de instalação.
