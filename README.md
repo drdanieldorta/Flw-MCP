@@ -17,21 +17,23 @@ Pré-requisitos: **Node.js 18+** (https://nodejs.org) e **Git** (https://git-scm
 
 ### Passo 2: cole um comando no terminal
 
+A primeira linha baixa o servidor uma vez (10 a 30 s) para a conexão do cliente não estourar o tempo limite. A segunda registra.
+
 **Claude Code**
 ```bash
+npx -y github:drdanieldorta/Flw-MCP --version
 claude mcp add flw -s user -e FLW_API_KEY=pn_SEU_TOKEN -- npx -y github:drdanieldorta/Flw-MCP
 ```
 
 **Codex CLI**
 ```bash
+npx -y github:drdanieldorta/Flw-MCP --version
 codex mcp add flw --env FLW_API_KEY=pn_SEU_TOKEN -- npx -y github:drdanieldorta/Flw-MCP
 ```
 
-**No Windows**, troque `npx -y github:...` por `cmd /c npx -y github:drdanieldorta/Flw-MCP` nos dois comandos.
+**No Windows**, troque `npx -y github:...` por `cmd /c npx -y github:drdanieldorta/Flw-MCP` no comando de registro.
 
-**Teste:** abra o Claude Code ou o Codex e peça *"use flw_status para verificar a conexão com o FLW"*.
-
-A primeira inicialização baixa e compila o servidor (cerca de 20 segundos). As seguintes levam poucos segundos.
+**Teste:** `claude mcp list` deve mostrar `flw ... ✓ Connected`. Depois, no Claude Code ou no Codex, peça *"use flw_status para verificar a conexão com o FLW"*.
 
 ---
 
@@ -235,7 +237,7 @@ Todas têm prefixo `flw_`. Listagens são paginadas (`pageNumber`, `pageSize` at
 | `ENOENT npx` no Windows | Clientes MCP não executam `npx.cmd` direto | Use `cmd /c npx ...` (o instalador já faz isso). |
 | `ERROR_UNAUTHORIZED` em `flw_status` | Token inválido ou expirado | Gere um novo token na plataforma. |
 | `429` | Rate limit | Aguarde; o servidor já refaz a tentativa automaticamente. |
-| Codex marca `flw` como falho só na primeira vez | Compilação inicial excede o tempo limite padrão (10 s) | Rode de novo, ou adicione `startup_timeout_sec = 60` em `[mcp_servers.flw]` no `config.toml`. |
+| `connection timed out` no `claude mcp list` ou Codex marca `flw` como falho só na primeira vez | Primeiro download do servidor excede o tempo limite do cliente | Rode `npx -y github:drdanieldorta/Flw-MCP --version` uma vez e tente de novo. No Codex, `startup_timeout_sec = 60` em `[mcp_servers.flw]`. |
 
 ---
 

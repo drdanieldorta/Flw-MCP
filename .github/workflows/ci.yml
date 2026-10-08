@@ -20,3 +20,10 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - name: dist/ versionado precisa estar atualizado
+        run: |
+          if ! git diff --quiet -- dist; then
+            echo "dist/ está desatualizado em relação a src/. Rode 'npm run build' e commite a pasta dist." >&2
+            git --no-pager diff --stat -- dist
+            exit 1
+          fi

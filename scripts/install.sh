@@ -145,6 +145,12 @@ else
   fi
   echo "==> Registrando execução via: npx -y $SOURCE"
   COMMAND="npx"; ARGS=("-y" "$SOURCE")
+  echo "==> Baixando o servidor agora (evita timeout na primeira conexão do cliente)..."
+  if ver="$(npx -y "$SOURCE" --version 2>/dev/null)"; then
+    echo "  pronto: $ver"
+  else
+    echo "  aviso: não consegui pré-baixar; a primeira conexão pode demorar mais que o normal." >&2
+  fi
 fi
 
 # --- Token ----------------------------------------------------------------------

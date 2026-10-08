@@ -164,6 +164,9 @@ if ($LocalMode) {
   # No Windows, clientes MCP não conseguem executar npx.cmd diretamente; use cmd /c.
   $Command = "cmd"
   [string[]]$CmdArgs = @("/c", "npx", "-y", $Source)
+  Write-Host "==> Baixando o servidor agora (evita timeout na primeira conexão do cliente)..."
+  $code = Invoke-Native "cmd" @("/c", "npx", "-y", $Source, "--version")
+  if ($code -ne 0) { Write-Warning "  não consegui pré-baixar; a primeira conexão pode demorar mais que o normal." }
 }
 
 # --- Token -------------------------------------------------------------------
